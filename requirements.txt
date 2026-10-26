@@ -1,0 +1,26 @@
+# Dependencies for running the pipeline locally/off-cluster. slurm/environment.yml
+# is the conda manifest used on the HPC cluster; keep the two in sync by hand when
+# adding a dependency -- it also carries CUDA-wheel and proxy packages (pproxy)
+# that don't apply here.
+
+pandas>=2.0
+numpy
+pyarrow
+pyyaml
+tqdm
+matplotlib
+scipy>=1.15
+spacy>=3.7
+geopy
+countrynames
+flair>=0.14
+
+# torch: install separately for your platform, e.g.
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+# (see slurm/setup_env.sh for the CUDA-wheel variant used on the cluster)
+
+# spaCy model needed by src/ranking_locations.py (stage 4):
+#   python -m spacy download de_core_news_sm
+
+# only needed for src/ai_annotation.py:
+#   pip install google-genai

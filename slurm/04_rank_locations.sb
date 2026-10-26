@@ -1,0 +1,28 @@
+#!/bin/bash
+# Stage 4: rank every tagged location by its distance to the nearest keyword of
+# the impact type, one array task per impact type.
+#
+#   in : data/eventcoverage/eventcoverage_<dtype>_localised.parquet
+#   out: data/eventcoverage/eventcoverage_<dtype>_localised_ranked.parquet
+#
+# CPU work: spaCy's de_core_news_sm segments the bodies into sentences. The
+# model has to be installed in the environment ("python -m spacy download
+# de_core_news_sm"), the script does not fetch it.
+#SBATCH --job-name=cov04_rank
+#SBATCH --output=slurm/logs/%x-%A_%a.out
+#SBATCH --error=slurm/logs/%x-%A_%a.err
+#SBATCH --array=0-4
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=48G
+#SBATCH --time=12:00:00
+
+source "${COVERAGE_DIR:-$SLURM_SUBMIT_DIR}/slurm/env.sh"
+
+dtype="$(dtype_of_task)"
+echo "impact type: $dtype"
+
+python src/ranking_locations.py "$dtype"
+
+echo "finished  : $(date --iso-8601=seconds)"

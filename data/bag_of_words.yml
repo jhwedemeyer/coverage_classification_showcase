@@ -1,0 +1,92 @@
+
+# A keyword ending in * is expanded into an FTS5 prefix query by lib/bag_of_words.py, which
+# matches every token beginning with it: "Waldbrand"* covers Waldbrände, Waldbränden and
+# Waldbrandgefahr in one term. The search tokenizer neither stems nor splits compounds, so
+# without the star an article that only ever writes "Waldbränden" is not found at all.
+#
+# Keywords whose prefix reaches an unrelated word are left without a star: Dürre* would match
+# Dürrenmatt in 4,400 articles, Hitzeschutz* the heat shield of a spacecraft. Their inflections
+# have to be listed by hand instead.
+#
+# A plural that umlauts its stem needs its own entry as well. The search index folds the umlaut
+# away and finds Waldbränden under Waldbrand*, but ranking_locations.py looks the keywords up in
+# the raw article text, where Waldbrand is not a substring of Waldbränden.
+#
+# "General" is not an impact type. It holds common German function words, which every article
+# with real text contains, so searching for them counts how many articles a journal published.
+
+
+General:
+- der
+- die
+- das
+- ein
+- eine
+- und
+
+Cold:
+- Wintersturm*
+- Winterstürme*
+- Schneesturm*
+- Schneestürme*
+- Schneechaos*
+- Rekordkälte*
+- Kälterekord*
+- Kältewelle*
+- Frostrekord*
+- Schneekatastrophe*
+- Schneekrise*
+
+Storm:
+- Wirbelsturm*
+- Wirbelstürme*
+- Hurrikan*
+- Tropensturm*
+- Tropenstürme*
+- Sturmwarnung*
+- Sturmbö
+- Sturmböe*
+
+Flood:
+- Starkregen*
+- Starkniederschlag*
+- Starkniederschläge*
+- Flutkatastrophe*
+- Überschwemmung
+- Überschwemmungen
+- Überschwemmungskatastrophe*
+- Überschwemmungsschäden
+- Überschwemmungsopfer*
+- Regenintensität*
+- Niederschlagsintensität*
+- Sturmflut
+- Sturmfluten
+- Sturmflutkatastrophe
+- Sturmflutkatastrophen
+- Sturmflutwarnung
+- Sturmflutwarnungen
+- Sturmflutnacht
+- Sturmflutschäden
+- Sturmflutsirenen
+- Deichbruch*
+- Deichbrüche*
+- Flutopfer*
+
+Heat:
+- Hitzewelle*
+- Hitzeschlag*
+- Hitzeschläge*
+- Temperaturrekord*
+- Hitzerekord*
+- Hitzebelastung*
+- Hitzetod*
+
+Wildfire:
+- Waldbrand
+- Waldbrands
+- Waldbrandes
+- Waldbrände
+- Waldbränden
+- Waldbrandkatastrophe*
+- Waldbrandgebiet*
+

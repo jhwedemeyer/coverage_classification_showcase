@@ -1,0 +1,48 @@
+#!/bin/bash
+# Stage 2: tag the locations in every article with flair's German NER model,
+# one array task per impact type.
+#
+#   in : data/eventcoverage/eventcoverage_<dtype>.parquet
+#   out: data/eventcoverage/eventcoverage_<dtype>_localised.parquet
+#
+# This is the expensive stage of the pipeline: ner-german-large runs over every
+# sentence of every article. It is the only stage that wants a GPU. The
+# resources follow the usual GPU template (gpushort, one GPU, 16 cpus, 60G);
+# qos, partition and gres are passed by submit_pipeline.sh so that they can be
+# changed without touching this file.
+#SBATCH --job-name=cov02_locations
+#SBATCH --output=slurm/logs/%x-%A_%a.out
+#SBATCH --error=slurm/logs/%x-%A_%a.err
+#SBATCH --array=0-4
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=60000
+
+source "${COVERAGE_DIR:-$SLURM_SUBMIT_DIR}/slurm/env.sh" gpu
+
+dtype="$(dtype_of_task)"
+echo "impact type: $dtype"
+
+# setup_env.sh pre-fetches ner-german-large into $FLAIR_CACHE_ROOT. If it is
+# there, run fully offline (HF_HUB_OFFLINE=1); otherwise download it via the proxy.
+export FLAIR_CACHE_ROOT="${FLAIR_CACHE_ROOT:-$HOME/.flair}"
+model_bin="$FLAIR_CACHE_ROOT/models/ner-german-large/models--flair--ner-german-large/snapshots"
+
+if [[ -n "$(find "$model_bin" -follow -name pytorch_model.bin 2> /dev/null | head -1)" ]]; then
+    echo "flair     : ner-german-large cached in $FLAIR_CACHE_ROOT, running offline"
+    export HF_HUB_OFFLINE=1
+else
+    echo "flair     : ner-german-large not in $FLAIR_CACHE_ROOT, it has to be downloaded"
+    setup_http_proxy || {
+        echo "no proxy and no cached model. Run ./slurm/setup_env.sh (or its" >&2
+        echo "--check) on a login node, which fetches the model, and resubmit." >&2
+        exit 1
+    }
+fi
+
+python -c "import torch; print('cuda available:', torch.cuda.is_available())"
+
+python src/classify_locations.py "$dtype"
+
+echo "finished  : $(date --iso-8601=seconds)"

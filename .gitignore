@@ -1,0 +1,16 @@
+# Research corpus and generated pipeline data -- 82G, never committed.
+data/*
+!data/bag_of_words.yml
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Slurm job logs (directory kept via .gitkeep)
+slurm/logs/*
+!slurm/logs/.gitkeep
+
+# Editors / OS cruft
+.DS_Store
+*.swp

@@ -1,0 +1,33 @@
+#!/bin/bash
+# Stage 5: geocode the unique locations with Nominatim and record the country.
+#
+#   in : data/localisation/all_locations.pkl
+#   out: data/localisation/all_locations_geocoded.{pkl,csv}
+#
+# Network bound, one request per second, and the ~110k locations therefore take
+# well over a day. The script only geocodes what is not in the output yet and
+# checkpoints every 250 locations, so a job that runs into its wall time is
+# continued simply by starting the next one -- submit_pipeline.sh chains
+# GEOCODE_CHAIN of these with afterany for exactly that.
+#
+# The node reaches Nominatim through the proxy set up in env.sh; without it
+# the stage stops rather than recording false "no match" rows. Alternatively,
+# run the script locally and submit with SKIP_GEOCODE=1.
+#SBATCH --job-name=cov05_geocode
+#SBATCH --output=slurm/logs/%x-%j.out
+#SBATCH --error=slurm/logs/%x-%j.err
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=16G
+#SBATCH --time=24:00:00
+
+source "${COVERAGE_DIR:-$SLURM_SUBMIT_DIR}/slurm/env.sh"
+
+setup_http_proxy
+
+# A chained follow-up job whose predecessor got through the whole list finds
+# nothing pending and returns right away, so it costs a few minutes at most.
+python src/map_location_to_country.py
+
+echo "finished  : $(date --iso-8601=seconds)"

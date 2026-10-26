@@ -1,0 +1,22 @@
+#!/bin/bash
+# Stage 6: attribute every article to a country and aggregate the coverage days.
+#
+#   in : the ranked per-impact-type files, data/localisation/all_locations_geocoded.pkl
+#   out: data/coverage_days.csv, data/coverage_days_per_dtype.csv,
+#        data/coverage_days_monthly_bins.csv
+#
+# Holds all five impact types in memory at once, hence the memory request.
+#SBATCH --job-name=cov06_coverage_days
+#SBATCH --output=slurm/logs/%x-%j.out
+#SBATCH --error=slurm/logs/%x-%j.err
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=96G
+#SBATCH --time=04:00:00
+
+source "${COVERAGE_DIR:-$SLURM_SUBMIT_DIR}/slurm/env.sh"
+
+python src/gen_coverage_days.py
+
+echo "finished  : $(date --iso-8601=seconds)"

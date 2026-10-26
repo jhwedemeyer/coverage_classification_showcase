@@ -1,0 +1,49 @@
+# The environment the coverage classification pipeline runs in, created by
+# ./slurm/setup_env.sh -- which also installs torch, the spaCy model and
+# (optionally) the flair model, none of which fit into this file because they
+# depend on the CUDA version of the cluster.
+#
+# Deliberately without a `name:`: the environment is created with `-p` into
+# /p/tmp/$USER/envs, and a name in here would only compete with that.
+
+channels:
+  - conda-forge
+
+dependencies:
+  # flair 0.15 supports 3.9-3.12; 3.11 is what the conda-forge builds of the
+  # scientific stack are best covered for.
+  - python=3.11
+  - pip
+
+  # Stages 1, 3, 4, 6 -- the data handling. pyarrow is what pandas writes the
+  # eventcoverage parquets with, sqlite is read through the standard library.
+  - pandas>=2.0
+  - numpy
+  - pyarrow
+  - pyyaml
+  - tqdm
+  # imported by lib/news_data_filter.py, which comes in with the loader
+  - matplotlib-base
+
+  # Validation -- the Wilson intervals and the stratified bootstrap of
+  # evaluate_annotation.py. rng= on stats.bootstrap needs 1.15 or newer.
+  - scipy>=1.15
+
+  # Stage 4 -- sentence segmentation. The German model is not a conda package
+  # and is installed by setup_env.sh.
+  - spacy>=3.7
+
+  # Stage 5 -- geocoding.
+  - geopy
+
+  - pip:
+      # The proxy the compute nodes reach Nominatim and huggingface through
+      # (see setup_http_proxy in env.sh). PyPI only, conda-forge has no build.
+      - pproxy
+      # Stage 6 -- ISO3 codes for the geocoded country names.
+      - countrynames
+
+# flair (stage 2) is not in here on purpose. It depends on torch and would pull
+# whatever wheel PyPI hands out, after which the CUDA build setup_env.sh wants
+# counts as "already satisfied" and is never installed. The script therefore
+# installs torch first and flair after it.

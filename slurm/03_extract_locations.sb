@@ -1,0 +1,19 @@
+#!/bin/bash
+# Stage 3: collect the unique location strings of all impact types.
+#
+#   in : data/eventcoverage/eventcoverage_<dtype>_localised.parquet (all five)
+#   out: data/localisation/all_locations.pkl
+#SBATCH --job-name=cov03_extract
+#SBATCH --output=slurm/logs/%x-%j.out
+#SBATCH --error=slurm/logs/%x-%j.err
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=2
+#SBATCH --mem=32G
+#SBATCH --time=01:00:00
+
+source "${COVERAGE_DIR:-$SLURM_SUBMIT_DIR}/slurm/env.sh"
+
+python src/extract_locations.py
+
+echo "finished  : $(date --iso-8601=seconds)"

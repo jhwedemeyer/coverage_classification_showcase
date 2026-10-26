@@ -1,0 +1,27 @@
+#!/bin/bash
+# Stage 1: select the climate impact coverage from the news database with the
+# bag of words, one parquet per impact type.
+#
+#   in : data/news021024.db, data/bag_of_words.yml
+#   out: data/eventcoverage/eventcoverage_<dtype>.parquet
+#
+# One job, not one per impact type: the sqlite full text search runs over the
+# same database for all five and the whole result set is held in memory before
+# it is written, which is what the memory request is for.
+#SBATCH --job-name=cov01_impact
+#SBATCH --output=slurm/logs/%x-%j.out
+#SBATCH --error=slurm/logs/%x-%j.err
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=64G
+#SBATCH --time=06:00:00
+
+source "${COVERAGE_DIR:-$SLURM_SUBMIT_DIR}/slurm/env.sh"
+
+# Check that the corpus and its FTS5 index are there before searching.
+python src/check_news_db.py
+
+python src/classify_impact_type.py
+
+echo "finished  : $(date --iso-8601=seconds)"
